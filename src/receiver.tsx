@@ -3,7 +3,6 @@ import React, { useEffect, useRef } from 'react';
 const Receiver: React.FC<{ wsUrl: string }> = ({ wsUrl }) => {
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const receiverWS = useRef<WebSocket | null>(null);
-  
   const pc = new RTCPeerConnection();
 
   useEffect(() => {
@@ -74,7 +73,7 @@ const Receiver: React.FC<{ wsUrl: string }> = ({ wsUrl }) => {
     <div>
       <h2>Receiver</h2>
       <div className="video-container">
-        <video ref={remoteVideoRef} playsInline controls muted loop className="srcVideo"></video>
+        <video ref={remoteVideoRef} autoPlay playsInline controls muted></video>
       </div>
     </div>
   );

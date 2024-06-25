@@ -3,7 +3,6 @@ import React, { useEffect, useRef } from 'react';
 const Sender: React.FC<{ wsUrl: string }> = ({ wsUrl }) => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const senderWS = useRef<WebSocket | null>(null);
-  
   const pc = new RTCPeerConnection();
 
   useEffect(() => {
@@ -40,12 +39,25 @@ const Sender: React.FC<{ wsUrl: string }> = ({ wsUrl }) => {
     };
   }, [wsUrl]);
 
+  function startScreenSharing() {
+    navigator.mediaDevices.getDisplayMedia({
+      video: true, // Enable screen sharing video
+      audio: true, // Enable audio if needed
+    })
+    .then(stream => {
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+      
+      // Add tracks to the peer connection
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+    })
+    .catch(error => {
+      console.error('Error accessing screen sharing:', error);
+    });
+  }
+
   function createOffer() {
-
-    if (localVideoRef.current && localVideoRef.current.srcObject instanceof MediaStream) {
-      localVideoRef.current.srcObject.getTracks().forEach(track => pc.addTrack(track, localVideoRef.current!.srcObject! as MediaStream));
-    }
-
     pc.createOffer()
       .then(offer => pc.setLocalDescription(offer))
       .then(() => {
@@ -60,17 +72,16 @@ const Sender: React.FC<{ wsUrl: string }> = ({ wsUrl }) => {
     };
   }
 
-function handleReceiveAnswer(answer: any) {
-  console.log('Received answer:', answer);
-  pc.setRemoteDescription(new RTCSessionDescription(answer))
-    .then(() => {
-      console.log('Remote description set successfully');
-    })
-    .catch(error => {
-      console.error('Error setting remote description:', error);
-    });
-}
-
+  function handleReceiveAnswer(answer: any) {
+    console.log('Received answer:', answer);
+    pc.setRemoteDescription(new RTCSessionDescription(answer))
+      .then(() => {
+        console.log('Remote description set successfully');
+      })
+      .catch(error => {
+        console.error('Error setting remote description:', error);
+      });
+  }
 
   function handleReceiveIceCandidate(candidate: any) {
     console.log('Received ICE candidate:', candidate);
@@ -82,7 +93,8 @@ function handleReceiveAnswer(answer: any) {
     <div>
       <h2>Sender</h2>
       <video ref={localVideoRef} autoPlay playsInline muted></video>
-      <button onClick={createOffer}>Start Screen Sharing</button>
+      <button onClick={startScreenSharing}>Start Screen Sharing</button>
+      <button onClick={createOffer}>Send Screen</button>
     </div>
   );
 };
